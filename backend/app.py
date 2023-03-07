@@ -49,44 +49,40 @@ def queryGritData(timeframe = 'yesterday', reportType = 'toolReport', authToken 
     dump = json.dumps(content)
     with open(f'data/{reportType}_{timeframe}.json', 'w') as output:
         output.write(dump)
-    
+        output.close()
     return(content)
 
-def dataReader(timeframe = 'yesterday', reportType = 'toolReport'):
+def getData(timeframe = 'yesterday', reportType = 'toolReport'):
     try:
         file = open(f'data/{reportType}_{timeframe}.json', 'r')
         content = pd.read_json(file)
-        if(content[-1] == 'toolReport'):
-            # machine & user
-        elif(content[-1] == 'userReport'):
-            # user total & user by-tool
-        else:
-            # all others are 1 layer
+        file.close()
+        
     except FileNotFoundError:
         content = queryGritData(timeframe, reportType)
+        
     except:
         print('oh shit lol')
         exit(-1)
-    
+            
+        if(content[-1] == 'toolReport'):
+            machineData = content[0]
+            userData = content[1]
+            return(machineData, userData)
         
-    return()
+        elif(content[-1] == 'userReport'):
+            userTotal = content[0]
+            userTools = content[1]
+            return(userTotal, userTools)
+        
+        else:
+            return(content)
+        
 
-reportType = 'toolReport'
-timeframe = 'yesterday'
-
-file = open(f'data/{reportType}_{timeframe}.json', 'r')
-content = pd.read_json(file)
-
-
-
-
-
-###
+# reportType = 'toolReport'
+# timeframe = 'yesterday'
     
-content = queryGritData()
-
-machineData = content[1]
-userData = content[2]
+machineData, userData = getData()
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.SPACELAB], title = 'Test Application')
 
