@@ -14,22 +14,29 @@ from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import numpy as np
+from dotenv import load_dotenv
+import os
 
 # read secrets
-
-keys = open('keys.txt', 'r')
-auths = keys.readlines()
-auth_token = auths[0].strip()
-bearer_token = auths[1].strip()
-URL = auths[2].strip()
-keys.close()
-
+def secretFunc():
+    load_dotenv()
+    global auth_token
+    global bearer_token
+    global URL
+    auth_token = os.getenv('auth_token')
+    bearer_token = os.getenv('bearer_token')
+    URL = os.getenv('URL')
+    
+secretFunc()
+    
 ### query API function ###
+
+reportType = 'toolReport'
+timeframe = 'yesterday'
 
 def queryGritData(timeframe = 'yesterday', reportType = 'toolReport', authToken = auth_token, bearerToken = bearer_token, URL = URL):
     
     # make a dictionary for each of the endpoint lookups using the timeframe var
-    
     endpointDict = {'fullReport': f'{URL}/report/activity/{timeframe}/',
                     'runtimeReport': f'{URL}/report/activity/{timeframe}/runtime/',
                     'trackReport': f'{URL}/report/activity/{timeframe}/track/',
@@ -45,42 +52,86 @@ def queryGritData(timeframe = 'yesterday', reportType = 'toolReport', authToken 
     # save raw data
     
     content = json.loads(r.text)
-    content.append(f'{reportType}')
-    dump = json.dumps(content)
-    with open(f'data/{reportType}_{timeframe}.json', 'w') as output:
-        output.write(dump)
-        output.close()
-    return(content)
+    
+    if(reportType == 'toolReport'):
+        machineData = pd.read_json(json.dumps(content[0]))
+        userData = pd.read_json(json.dumps(content[1]))
+        file1 = open(f'data/machineData_{timeframe}.json', 'w')
+        json.dump(machineData.to_dict(), file1)
+        file1.close()
+        file2 = open(f'data/userData_{timeframe}.json', 'w')
+        json.dump(userData.to_dict(), file2)
+        file2.close()
+        return(machineData, userData)
+    
+    elif(reportType == 'userReport'):
+        userTotal = pd.read_json(json.dumps(content[0]))
+        userTools = pd.read_json(json.dumps(content[1]))
+        file1 = open(f'data/userTotal_{timeframe}.json', 'w')
+        json.dump(userTotal.to_dict(), file1)
+        file1.close()
+        file2 = open(f'data/userTools_{timeframe}.json', 'w')
+        json.dump(userTools.to_dict(), file2)
+        file2.close()
+        return(userTotal, userTools)
+    
+    else:
+        file = open(f'data/{reportType}_{timeframe}.json', 'w')
+        json.dump(content, file)
+        file.close()
+        return(content)
+   
+#####
 
 def getData(timeframe = 'yesterday', reportType = 'toolReport'):
-    try:
-        file = open(f'data/{reportType}_{timeframe}.json', 'r')
-        content = pd.read_json(file)
-        file.close()
+    
+    if reportType == 'toolReport':
         
-    except FileNotFoundError:
-        content = queryGritData(timeframe, reportType)
-        
-    except:
-        print('oh shit lol')
-        exit(-1)
+        try:
+            file1 = open(f'data/machineData_{timeframe}.json', 'r')
+            machineData = json.load(file1)
+            file1.close()
+            file2 = open(f'data/userData_{timeframe}.json','r')
+            userData = json.load(file2)
+            file2.close()
             
-        if(content[-1] == 'toolReport'):
-            machineData = content[0]
-            userData = content[1]
             return(machineData, userData)
         
-        elif(content[-1] == 'userReport'):
-            userTotal = content[0]
-            userTools = content[1]
+        except:
+            machineData, userData = queryGritData(timeframe, reportType)
+            return(machineData, userData)
+            
+    if reportType == 'userReport':
+        
+        try:
+            file1 = open(f'data/machineData_{timeframe}.json', 'r')
+            userTotal = json.load(file1)
+            file1.close()
+            file2 = open(f'data/userData_{timeframe}.json','r')
+            userTools = json.load(file2)
+            file2.close()
+            
             return(userTotal, userTools)
         
-        else:
-            return(content)
+        except:
+            userTotal, userTools = queryGritData(timeframe, reportType)
+            return(userTotal, userTools)
+            
+    else:
+        
+        try:
+            file = open(f'data/{reportType}_{timeframe}.json', 'r')
+            data = json.load(file)
+            file.close()
+            
+            return(data)
+        
+        except FileNotFoundError:
+            data = queryGritData(timeframe, reportType)
+            return(data)
         
 
-# reportType = 'toolReport'
-# timeframe = 'yesterday'
+
     
 machineData, userData = getData()
 
