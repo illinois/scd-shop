@@ -7,19 +7,47 @@ Created on Fri Mar  3 17:11:34 2023
 
 from funcs import *
 
-machineData, userData = getData()
+machineData, userData = getData() # pre-load yesterday's data
 
 app = Dash(__name__, external_stylesheets=[
-           dbc.themes.SPACELAB], title='SCD Shop Dashboard')
+           dbc.themes.BOOTSTRAP], title='SCD Shop Dashboard')
 
-app.layout = html.Div([
-    html.H1('Test Application'),
-    html.Div(children='Woah, a subtitle!'),
-    dcc.Dropdown( options = timeframeDict,
-        value = 'yesterday',
-        id = 'timeframe-dropdown'),
-    dcc.Graph(id = 'machineData-figure')
-])
+tab1_content = dbc.Card(
+    dbc.CardBody(
+        [
+            html.H1('Test Application'),
+            html.Div(children='Woah, a subtitle!'),
+            dcc.Dropdown( options = timeframeDict,
+                value = 'yesterday',
+                id = 'timeframe-dropdown'),
+            dcc.Graph(id = 'machineData-figure')
+        ]
+    ),
+    className="mt-3",
+)
+
+tab2_content = dbc.Card(
+    dbc.CardBody(
+        [
+            html.P("This is tab 2!", className="card-text"),
+            dbc.Button("Don't click here", color="danger"),
+        ]
+    ),
+    className="mt-3",
+)
+
+
+tabs = dbc.Tabs(
+    [
+        dbc.Tab(tab1_content, label="Machine Data"),
+        dbc.Tab(tab2_content, label="???"),
+        dbc.Tab(
+            "This tab's content is never seen", label="Live Dashboard (coming soon!)", disabled=True
+        ),
+    ]
+)
+
+app.layout = dbc.Container(tabs, fluid = True)
 
 @app.callback(
     Output('machineData-figure', 'figure'),

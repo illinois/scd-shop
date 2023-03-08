@@ -16,8 +16,6 @@ import numpy as np
 from dotenv import load_dotenv
 import os
 
-# read secrets
-
 timeframeDict = {'today': 'Today',
     'yesterday': 'Yesterday',
     'this-week': 'This Week',
@@ -31,6 +29,7 @@ timeframeDict = {'today': 'Today',
     'this-year': 'This Year',
     'all-time': 'All Time'}
 
+# read secrets
 def secretFunc():
     load_dotenv()
     global auth_token
@@ -45,8 +44,6 @@ def secretFunc():
 secretFunc()
 
 # query relevant GRIT endpoint
-
-
 def queryGritData(timeframe='yesterday', reportType='toolReport', authToken=auth_token, bearerToken=bearer_token, URL=URL):
 
     # make a dictionary for each of the endpoint lookups using the timeframe var
@@ -57,13 +54,14 @@ def queryGritData(timeframe='yesterday', reportType='toolReport', authToken=auth
                     'signonReport': f'{URL}/report/signon/{timeframe}/',
                     'assetReport': f'{URL}/report/asset/{timeframe}/',
                     'toolReport': f'{URL}/report/trigger/all/runtime/{timeframe}/',
-                    'userReport': f'{URL}/report/user/all/runtime/{timeframe}/'}
+                    'userReport': f'{URL}/report/user/all/runtime/{timeframe}/',
+                    'statusReport': f'{URL}/sse/data/'}
 
     r = requests.get(endpointDict[f"{reportType}"],
-                     data={'auth_token': auth_token})
+                     data={'auth_token': authToken},
+                     headers = {'Authorization': bearerToken})
 
     # save raw data
-
     content = json.loads(r.text)
 
     if(reportType == 'toolReport'):
@@ -96,8 +94,6 @@ def queryGritData(timeframe='yesterday', reportType='toolReport', authToken=auth
 
 # basic data retrieval - checks for local copy then pulls from API if necessary
 # implement stale-data checking or just have manual refresh
-
-
 def getData(timeframe='yesterday', reportType='toolReport'):
 
     if reportType == 'toolReport':
