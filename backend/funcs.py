@@ -105,6 +105,9 @@ def getData(timeframe='yesterday', reportType='toolReport'):
             file2 = open(f'data/userData_{timeframe}.json', 'r')
             userData = json.load(file2)
             file2.close()
+            
+            machineData = pd.DataFrame.from_records(machineData)
+            userData = pd.DataFrame.from_records(userData)
 
             return(machineData, userData)
 
