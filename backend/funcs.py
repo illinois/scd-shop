@@ -150,5 +150,6 @@ def aggregateFunc(input_df, group_by, aggregate_on, aggregate_func):
     # returns a pandas series of the aggregate target column in DESCENDING order
     aggregation = pd.NamedAgg(column = aggregate_on, aggfunc = aggregate_func)
     output_series = input_df.groupby(group_by).agg(result = aggregation)
-    output_series = output_series.sort_values(ascending = False)
+    if(group_by == 'userName' and aggregate_on == 'value'):
+        output_series = output_series.sort_values(by = 'result', ascending = False)
     return(output_series) 

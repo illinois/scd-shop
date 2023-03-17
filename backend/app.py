@@ -60,13 +60,37 @@ tab2_content = dbc.Card(
     className="mt-3",
 )
 
+tab3_content = dbc.Card(
+    dbc.CardBody(
+        [
+            html.H3('Live Dashboard'),
+            html.Div(children='Can you believe it? Another subtitle!'),
+            # commented out top row / dropdown / refresh button
+            # html.Div(children=[
+            #     html.Div(children=[
+            #         dcc.Dropdown(options=timeframeDict,
+            #                      value='yesterday',
+            #                      id='userTime-dropdown',
+            #                      className='me-2')],
+            #              className='col col-lg-2'),
+            #     html.Div(children=[
+            #         dbc.Button("Refresh Data", color="primary",
+            #                    id='userRefresh-button', n_clicks=0,
+            #                    className='me-2')],
+            #              className='col-md-auto')],
+            #          className='d-flex flex-row'),
+            dcc.Graph(id='liveDash-figure'),
+        ]
+    ),
+    className="mt-3",
+)
 
 tabs = dbc.Tabs(
     [
         dbc.Tab(tab1_content, label="Machine Data"),
         dbc.Tab(tab2_content, label="User Data"),
         dbc.Tab(
-            "This tab's content is never seen", label="Live Dashboard (coming soon!)", disabled=True
+            "Secret tunnnnel...", label="Live Dashboard (coming soon!)", disabled=True
         ),
     ]
 )
@@ -87,7 +111,7 @@ app.layout = dbc.Container(layout, fluid=True)
 @app.callback(
     Output('machineData-figure', 'figure'),
     Input('machineTime-dropdown', 'value'),
-    Input('userRefresh-button', 'n_clicks'))
+    Input('machineRefresh-button', 'n_clicks'))
 def update_user_figure(selected_timeframe='', n=0):
 
     if n > 0:
@@ -118,6 +142,15 @@ def update_machine_figure(selected_timeframe='', n=0):
                  y='value', color=userDataAgg.index)
     fig.update_layout(transition_duration=250)
 
+    return fig
+
+@app.callback(
+    Output('liveDash-figure', 'figure'),
+    Input('liveRefresh-button', 'n_clicks'))
+def updateDash(n = 0):
+    
+    fig = 
+    
     return fig
 
 
