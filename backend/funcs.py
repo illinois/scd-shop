@@ -149,7 +149,45 @@ def aggregateFunc(input_df, group_by, aggregate_on, aggregate_func):
     # takes a df as df, grouping column as string, aggregate target column as string, and aggregate function column as string
     # returns a pandas series of the aggregate target column in DESCENDING order
     aggregation = pd.NamedAgg(column = aggregate_on, aggfunc = aggregate_func)
+    
     output_series = input_df.groupby(group_by).agg(result = aggregation)
+    
     if(group_by == 'userName' and aggregate_on == 'value'):
         output_series = output_series.sort_values(by = 'result', ascending = False)
+        
     return(output_series) 
+
+def dashboardFunc():
+    # queries GRIT for the current status of all RFID-associated devices
+    # returns a pandas dataframe containing the device name, id, last updated time, online status, and current signed-in user (nan if none) 
+
+    r = requests.get(f'{URL}/sse/data', 
+        data={'auth_token': auth_token},
+        headers = {'Authorization': 'Bearer ' + bearer_token})
+
+    # save raw data
+    
+    def statusCheck(row):
+        inUse = '#fd7e14' # tool is in use, orange
+        available = '#20c997' # tool is available, teal
+        broken = '#adb5bd' # tool is locked out, gray
+        
+        if(row['data.lockout']):
+            return(broken)
+        elif(pd.isna(row['data.userName'])):
+            return(available)
+        else:
+            return(inUse)
+        
+    content = json.loads(r.text)
+    content = pd.json_normalize(content, max_level = 1)
+    output = content.iloc[[0]]
+    output = pd.concat([output, content.query('type == "rfid"')], 
+                       ignore_index = True)
+    output = output[['data.name', 'data.id', 
+                        'data.pingAt', 'data.isOnline',
+                        'data.userId', 'data.userName', 'data.lockout']]
+    
+    output['statusColor'] = output.apply(statusCheck, axis = 1)
+        
+    return(output)

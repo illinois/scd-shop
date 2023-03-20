@@ -7,7 +7,15 @@ Created on Fri Mar  3 17:11:34 2023
 
 from funcs import *
 
-machineData, userData = getData()  # pre-load yesterday's data
+# pre-load yesterday's data
+machineData, userData = getData()
+
+# load shop geoJSON
+geoJSON = 'data/features.geojson'
+with open(geoJSON) as file:
+    shopGEOJSON = json.load(file)
+    file.close()
+
 
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.BOOTSTRAP], title='SCD Shop Dashboard')
@@ -17,6 +25,7 @@ tab1_content = dbc.Card(
         [
             html.H3('Per-machine Runtime'),
             html.Div(children='Woah, a subtitle!'),
+            html.Br(),
             html.Div(children=[
                 html.Div(children=[
                     dcc.Dropdown(options=timeframeDict,
@@ -41,6 +50,7 @@ tab2_content = dbc.Card(
         [
             html.H3('Per-user Runtime'),
             html.Div(children='Woah, another subtitle!'),
+            html.Br(),
             html.Div(children=[
                 html.Div(children=[
                     dcc.Dropdown(options=timeframeDict,
@@ -63,35 +73,30 @@ tab2_content = dbc.Card(
 tab3_content = dbc.Card(
     dbc.CardBody(
         [
+            html.H3('Secret tab...')]))
+
+tab4_content = dbc.Card(
+    dbc.CardBody(
+        [
             html.H3('Live Dashboard'),
             html.Div(children='Can you believe it? Another subtitle!'),
-            # commented out top row / dropdown / refresh button
-            # html.Div(children=[
-            #     html.Div(children=[
-            #         dcc.Dropdown(options=timeframeDict,
-            #                      value='yesterday',
-            #                      id='userTime-dropdown',
-            #                      className='me-2')],
-            #              className='col col-lg-2'),
-            #     html.Div(children=[
-            #         dbc.Button("Refresh Data", color="primary",
-            #                    id='userRefresh-button', n_clicks=0,
-            #                    className='me-2')],
-            #              className='col-md-auto')],
-            #          className='d-flex flex-row'),
-            dcc.Graph(id='liveDash-figure'),
-        ]
-    ),
-    className="mt-3",
-)
+            html.Br(),
+            html.Div(children=[
+                dbc.Button("Refresh Data", color="primary",
+                           id='liveRefresh-button', n_clicks=0,
+                           className='me-2')],
+                     className='d-flex flex-row'),
+            dcc.Graph(id='liveDash-figure')
+            ]
+        ),
+    className="mt-3")
 
 tabs = dbc.Tabs(
     [
         dbc.Tab(tab1_content, label="Machine Data"),
         dbc.Tab(tab2_content, label="User Data"),
-        dbc.Tab(
-            "Secret tunnnnel...", label="Live Dashboard (coming soon!)", disabled=True
-        ),
+        dbc.Tab(tab3_content, label="More Data...", disabled = True),
+        dbc.Tab(tab4_content, label = 'Live Status Dashboard')
     ]
 )
 
@@ -112,14 +117,21 @@ app.layout = dbc.Container(layout, fluid=True)
     Output('machineData-figure', 'figure'),
     Input('machineTime-dropdown', 'value'),
     Input('machineRefresh-button', 'n_clicks'))
-def update_user_figure(selected_timeframe='', n=0):
+def update_machine_figure(selected_timeframe='', n=0):
 
     if n > 0:
         machineData, userData = queryGritData(timeframe=selected_timeframe)
     else:
         machineData, userData = getData(timeframe=selected_timeframe)
+        
+    machineData['value'] = machineData['value'] / 60
 
-    fig = px.bar(machineData, x='deviceName', y='value', color='deviceName')
+    fig = px.bar(machineData, x='deviceName', y='value', 
+                 title = 'Usage by Machine',
+                 labels = {
+                     'deviceName': 'Machine',
+                     'value': 'Cumulative Runtime (minutes)'},
+                 color='deviceName')
 
     fig.update_layout(transition_duration=250)
 
@@ -130,7 +142,7 @@ def update_user_figure(selected_timeframe='', n=0):
     Output('userData-figure', 'figure'),
     Input('userTime-dropdown', 'value'),
     Input('userRefresh-button', 'n_clicks'))
-def update_machine_figure(selected_timeframe='', n=0):
+def update_user_figure(selected_timeframe='', n=0):
 
     if n > 0:
         machineData, userData = queryGritData(timeframe=selected_timeframe)
@@ -138,18 +150,34 @@ def update_machine_figure(selected_timeframe='', n=0):
         machineData, userData = getData(timeframe=selected_timeframe)
     userDataAgg = userData.groupby('userName').value.agg('sum')
     userDataAgg = userDataAgg.sort_values(ascending=False)
+    
+    userDataAgg = userDataAgg / 60
+    
     fig = px.bar(userDataAgg, x=userDataAgg.index,
-                 y='value', color=userDataAgg.index)
+                 y='value',
+                 title = 'Usage by User', 
+                 labels = {
+                     'userName': 'User',
+                     'value': 'Cumulative Runtime (minutes)'},
+                 color=userDataAgg.index)
     fig.update_layout(transition_duration=250)
 
     return fig
+
 
 @app.callback(
     Output('liveDash-figure', 'figure'),
     Input('liveRefresh-button', 'n_clicks'))
 def updateDash(n = 0):
-    
-    fig = 
+
+    dashInfo = dashboardFunc()
+
+    fig = px.choropleth(dashInfo, geojson=shopGEOJSON,
+                        locations='data.id', featureidkey='properties.uid',
+                        color='statusColor')
+
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     
     return fig
 

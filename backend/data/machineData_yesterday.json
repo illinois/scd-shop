@@ -1,1 +1,1 @@
-{"deviceId": {"0": "dde4ca", "1": "ddec9b", "2": "ace9d7", "3": "e9bb33"}, "deviceName": {"0": "South Laser", "1": "North Laser", "2": "3PH Collector", "3": "Jointer"}, "deviceType": {"0": "trigger", "1": "trigger", "2": "collector", "3": "trigger"}, "value": {"0": 19239, "1": 8945, "2": 72, "3": 1}}
+{"deviceId": {"0": "c1b193"}, "deviceName": {"0": "Waterjet"}, "deviceType": {"0": "trigger"}, "value": {"0": 1496}}
