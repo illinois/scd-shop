@@ -1,0 +1,25 @@
+waterjet video
+
+## getting started section / video
+* turning on the waterjet
+* discussing the hazards of the waterjet
+* performing the auto-homing sequence
+* performing the test fires
+
+## file preparation video
+* loading a dxf into layout
+* cleaning a dxf (removing text, closed lines, etc.) & using the clean operation
+* using AutoPath Advanced & Configure
+* adding tabs
+* posting the file to MAKE
+
+## waterjet operation video
+* Change path setup in MAKE
+* adjusting any relevant settings
+* demonstrating clamping best practices
+* setting x/y home
+* setting z home
+* checking extrema / collision hazards
+* performing a dry run
+* running the cut!
+* misc: using the saw function

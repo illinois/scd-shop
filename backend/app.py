@@ -174,7 +174,10 @@ def updateDash(n = 0):
 
     fig = px.choropleth(dashInfo, geojson=shopGEOJSON,
                         locations='data.id', featureidkey='properties.uid',
-                        color='statusColor')
+                        color='statusColor',
+                        color_discrete_map = {'#fd7e14': '#fd7e14',  # inUse
+                                              '#20c997': '#20c997',  # available
+                                              '#adb5bd': '#adb5bd'}) # broken
 
     fig.update_geos(fitbounds="locations", visible=False)
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
