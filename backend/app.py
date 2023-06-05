@@ -20,7 +20,7 @@ with open(geoJSON) as file:
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.BOOTSTRAP], title='SCD Shop Dashboard')
 
-tab1_content = dbc.Card(
+reports1_tab = dbc.Card(
     dbc.CardBody(
         [
             html.H3('Per-machine Runtime'),
@@ -45,7 +45,7 @@ tab1_content = dbc.Card(
     className="mt-3",
 )
 
-tab2_content = dbc.Card(
+reports2_tab = dbc.Card(
     dbc.CardBody(
         [
             html.H3('Per-user Runtime'),
@@ -70,33 +70,33 @@ tab2_content = dbc.Card(
     className="mt-3",
 )
 
-tab3_content = dbc.Card(
+disabled_tab = dbc.Card(
     dbc.CardBody(
         [
             html.H3('Secret tab...')]))
 
-tab4_content = dbc.Card(
+toolMap_tab = dbc.Card(
     dbc.CardBody(
         [
-            html.H3('Live Dashboard'),
+            html.H3('Tool Map'),
             html.Div(children='Can you believe it? Another subtitle!'),
             html.Br(),
             html.Div(children=[
                 dbc.Button("Refresh Data", color="primary",
-                           id='liveRefresh-button', n_clicks=0,
+                           id='toolMap-button', n_clicks=0,
                            className='me-2')],
                      className='d-flex flex-row'),
-            dcc.Graph(id='liveDash-figure')
+            dcc.Graph(id='toolMap-figure')
             ]
         ),
     className="mt-3")
 
-tabs = dbc.Tabs(
+leftTabs = dbc.Tabs(
     [
-        dbc.Tab(tab1_content, label="Machine Data"),
-        dbc.Tab(tab2_content, label="User Data"),
-        dbc.Tab(tab3_content, label="More Data...", disabled = True),
-        dbc.Tab(tab4_content, label = 'Live Status Dashboard')
+        dbc.Tab(reports1_tab, label="Machine Data"),
+        dbc.Tab(reports2_tab, label="User Data"),
+        dbc.Tab(disabled_tab, label="More Data...", disabled = True),
+        dbc.Tab(toolMap_tab, label = 'Tool Map')
     ]
 )
 
@@ -106,8 +106,15 @@ layout = dbc.Container([
     html.Div('a silly goofy subtitle'),
     html.Br(),
     dbc.Alert("This dashboard is under development :)", color='info'),
-    html.Br(),
-    tabs],
+    html.Div(
+        [
+            dbc.Row(
+                [
+                    dbc.Col(html.Div(leftTabs)),
+                    dbc.Col(html.Div("Thar be tabs ahead..."))
+                ])
+            ])
+    ],
     fluid=True)
 
 app.layout = dbc.Container(layout, fluid=True)
@@ -166,9 +173,9 @@ def update_user_figure(selected_timeframe='', n=0):
 
 
 @app.callback(
-    Output('liveDash-figure', 'figure'),
-    Input('liveRefresh-button', 'n_clicks'))
-def updateDash(n = 0):
+    Output('toolMap-figure', 'figure'),
+    Input('toolMap-button', 'n_clicks'))
+def updateToolMap(n = 0):
 
     dashInfo = dashboardFunc()
 
