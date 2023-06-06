@@ -7,6 +7,9 @@ Created on Fri Mar  3 17:11:34 2023
 
 from funcs import *
 
+from tabs.reports import *
+from tabs.toolmap import *
+
 # pre-load yesterday's data
 machineData, userData = getData()
 
@@ -20,84 +23,34 @@ with open(geoJSON) as file:
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.BOOTSTRAP], title='SCD Shop Dashboard')
 
-reports1_tab = dbc.Card(
-    dbc.CardBody(
-        [
-            html.H3('Per-machine Runtime'),
-            html.Div(children='Woah, a subtitle!'),
-            html.Br(),
-            html.Div(children=[
-                html.Div(children=[
-                    dcc.Dropdown(options=timeframeDict,
-                                 value='yesterday',
-                                 id='machineTime-dropdown',
-                                 className='me-2')],
-                         className='col col-lg-2'),
-                html.Div(children=[
-                    dbc.Button("Refresh Data", color="primary",
-                               id='machineRefresh-button', n_clicks=0,
-                               className='me-2')],
-                         className='col-md-auto')],
-                     className='d-flex flex-row'),
-            dcc.Graph(id='machineData-figure'),
-        ]
-    ),
-    className="mt-3",
-)
+reports1_tab = machine_function()
 
-reports2_tab = dbc.Card(
-    dbc.CardBody(
-        [
-            html.H3('Per-user Runtime'),
-            html.Div(children='Woah, another subtitle!'),
-            html.Br(),
-            html.Div(children=[
-                html.Div(children=[
-                    dcc.Dropdown(options=timeframeDict,
-                                 value='yesterday',
-                                 id='userTime-dropdown',
-                                 className='me-2')],
-                         className='col col-lg-2'),
-                html.Div(children=[
-                    dbc.Button("Refresh Data", color="primary",
-                               id='userRefresh-button', n_clicks=0,
-                               className='me-2')],
-                         className='col-md-auto')],
-                     className='d-flex flex-row'),
-            dcc.Graph(id='userData-figure'),
-        ]
-    ),
-    className="mt-3",
-)
+reports2_tab = user_function()
 
 disabled_tab = dbc.Card(
     dbc.CardBody(
         [
-            html.H3('Secret tab...')]))
-
-toolMap_tab = dbc.Card(
-    dbc.CardBody(
-        [
-            html.H3('Tool Map'),
-            html.Div(children='Can you believe it? Another subtitle!'),
-            html.Br(),
-            html.Div(children=[
-                dbc.Button("Refresh Data", color="primary",
-                           id='toolMap-button', n_clicks=0,
-                           className='me-2')],
-                     className='d-flex flex-row'),
-            dcc.Graph(id='toolMap-figure')
+            html.H3('Secret tab...')
+            # when implementing this tab follow the same structure as others
             ]
-        ),
-    className="mt-3")
+        )
+    )
+
+toolMap_tab = toolMap_function()
 
 leftTabs = dbc.Tabs(
     [
         dbc.Tab(reports1_tab, label="Machine Data"),
         dbc.Tab(reports2_tab, label="User Data"),
-        dbc.Tab(disabled_tab, label="More Data...", disabled = True),
-        dbc.Tab(toolMap_tab, label = 'Tool Map')
+        dbc.Tab(disabled_tab, label="More Data...", disabled=True),
+        dbc.Tab(toolMap_tab, label='Tool Map')
     ]
+)
+
+rightTabs = dbc.Tabs(
+    [
+     dbc.Tab()
+     ]
 )
 
 layout = dbc.Container([
@@ -113,8 +66,8 @@ layout = dbc.Container([
                     dbc.Col(html.Div(leftTabs)),
                     dbc.Col(html.Div("Thar be tabs ahead..."))
                 ])
-            ])
-    ],
+        ])
+],
     fluid=True)
 
 app.layout = dbc.Container(layout, fluid=True)
@@ -130,12 +83,12 @@ def update_machine_figure(selected_timeframe='', n=0):
         machineData, userData = queryGritData(timeframe=selected_timeframe)
     else:
         machineData, userData = getData(timeframe=selected_timeframe)
-        
+
     machineData['value'] = machineData['value'] / 60
 
-    fig = px.bar(machineData, x='deviceName', y='value', 
-                 title = 'Usage by Machine',
-                 labels = {
+    fig = px.bar(machineData, x='deviceName', y='value',
+                 title='Usage by Machine',
+                 labels={
                      'deviceName': 'Machine',
                      'value': 'Cumulative Runtime (minutes)'},
                  color='deviceName')
@@ -157,13 +110,13 @@ def update_user_figure(selected_timeframe='', n=0):
         machineData, userData = getData(timeframe=selected_timeframe)
     userDataAgg = userData.groupby('userName').value.agg('sum')
     userDataAgg = userDataAgg.sort_values(ascending=False)
-    
+
     userDataAgg = userDataAgg / 60
-    
+
     fig = px.bar(userDataAgg, x=userDataAgg.index,
                  y='value',
-                 title = 'Usage by User', 
-                 labels = {
+                 title='Usage by User',
+                 labels={
                      'userName': 'User',
                      'value': 'Cumulative Runtime (minutes)'},
                  color=userDataAgg.index)
@@ -175,20 +128,20 @@ def update_user_figure(selected_timeframe='', n=0):
 @app.callback(
     Output('toolMap-figure', 'figure'),
     Input('toolMap-button', 'n_clicks'))
-def updateToolMap(n = 0):
+def updateToolMap(n=0):
 
     dashInfo = dashboardFunc()
 
     fig = px.choropleth(dashInfo, geojson=shopGEOJSON,
                         locations='data.id', featureidkey='properties.uid',
                         color='statusColor',
-                        color_discrete_map = {'#fd7e14': '#fd7e14',  # inUse
-                                              '#20c997': '#20c997',  # available
-                                              '#adb5bd': '#adb5bd'}) # broken
+                        color_discrete_map={'#fd7e14': '#fd7e14',  # inUse
+                                            '#20c997': '#20c997',  # available
+                                            '#adb5bd': '#adb5bd'})  # broken
 
     fig.update_geos(fitbounds="locations", visible=False)
     fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    
+
     return fig
 
 

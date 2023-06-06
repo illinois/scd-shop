@@ -162,7 +162,7 @@ def dashboardFunc():
     # returns a pandas dataframe containing the device name, id, last updated time, online status, and current signed-in user (nan if none) 
 
     r = requests.get(f'{URL}/sse/data', 
-        data={'auth_token': auth_token},
+        data = {'auth_token': auth_token},
         headers = {'Authorization': 'Bearer ' + bearer_token})
 
     # save raw data
