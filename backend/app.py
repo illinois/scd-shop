@@ -5,8 +5,10 @@ Created on Fri Mar  3 17:11:34 2023
 @author: Rishi
 """
 
+# import helper functions
 from funcs import *
 
+# import tabs
 from tabs.reports import *
 from tabs.toolmap import *
 
@@ -23,10 +25,6 @@ with open(geoJSON) as file:
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.BOOTSTRAP], title='SCD Shop Dashboard')
 
-reports1_tab = machine_function()
-
-reports2_tab = user_function()
-
 disabled_tab = dbc.Card(
     dbc.CardBody(
         [
@@ -36,14 +34,12 @@ disabled_tab = dbc.Card(
         )
     )
 
-toolMap_tab = toolMap_function()
-
 leftTabs = dbc.Tabs(
     [
-        dbc.Tab(reports1_tab, label="Machine Data"),
-        dbc.Tab(reports2_tab, label="User Data"),
+        dbc.Tab(machine_function(), label="Machine Data"),
+        dbc.Tab(user_function(), label="User Data"),
         dbc.Tab(disabled_tab, label="More Data...", disabled=True),
-        dbc.Tab(toolMap_tab, label='Tool Map')
+        dbc.Tab(toolMap_function(), label='Tool Map')
     ]
 )
 
@@ -130,7 +126,7 @@ def update_user_figure(selected_timeframe='', n=0):
     Input('toolMap-button', 'n_clicks'))
 def updateToolMap(n=0):
 
-    dashInfo = dashboardFunc()
+    dashInfo = toolMapData()
 
     fig = px.choropleth(dashInfo, geojson=shopGEOJSON,
                         locations='data.id', featureidkey='properties.uid',

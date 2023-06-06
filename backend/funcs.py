@@ -15,6 +15,8 @@ import plotly.express as px
 import numpy as np
 from dotenv import load_dotenv
 import os
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
 timeframeDict = {'today': 'Today',
     'yesterday': 'Yesterday',
@@ -35,16 +37,18 @@ def secretFunc():
     global auth_token
     global bearer_token
     global URL
+    global mongo_URI
     auth_token = os.getenv('auth_token')
     bearer_token = os.getenv('bearer_token')
     URL = os.getenv('URL')
+    mongo_URI = os.getenv('mongo_URI')
 
 
 # load secrets
 secretFunc()
 
 # query relevant GRIT endpoint
-def queryGritData(timeframe='yesterday', reportType='toolReport', authToken=auth_token, bearerToken=bearer_token, URL=URL):
+def queryGritData(timeframe='yesterday', reportType='toolReport'):
 
     # make a dictionary for each of the endpoint lookups using the timeframe var
     endpointDict = {'fullReport': f'{URL}/report/activity/{timeframe}/',
@@ -58,8 +62,8 @@ def queryGritData(timeframe='yesterday', reportType='toolReport', authToken=auth
                     'statusReport': f'{URL}/sse/data/'}
 
     r = requests.get(endpointDict[f"{reportType}"],
-                     data={'auth_token': authToken},
-                     headers = {'Authorization': bearerToken})
+                     data={'auth_token': auth_token},
+                     headers = {'Authorization': bearer_token})
 
     # save raw data
     content = json.loads(r.text)
@@ -144,22 +148,9 @@ def getData(timeframe='yesterday', reportType='toolReport'):
             data = queryGritData(timeframe, reportType)
             return(data)
 
-
-def aggregateFunc(input_df, group_by, aggregate_on, aggregate_func):
-    # takes a df as df, grouping column as string, aggregate target column as string, and aggregate function column as string
-    # returns a pandas series of the aggregate target column in DESCENDING order
-    aggregation = pd.NamedAgg(column = aggregate_on, aggfunc = aggregate_func)
-    
-    output_series = input_df.groupby(group_by).agg(result = aggregation)
-    
-    if(group_by == 'userName' and aggregate_on == 'value'):
-        output_series = output_series.sort_values(by = 'result', ascending = False)
-        
-    return(output_series) 
-
-def dashboardFunc():
-    # queries GRIT for the current status of all RFID-associated devices
-    # returns a pandas dataframe containing the device name, id, last updated time, online status, and current signed-in user (nan if none) 
+# queries GRIT for the current status of all RFID-associated devices
+# returns a pandas dataframe containing the device name, id, last updated time, online status, and current signed-in user (nan if none)
+def toolMapData(): 
 
     r = requests.get(f'{URL}/sse/data', 
         data = {'auth_token': auth_token},
