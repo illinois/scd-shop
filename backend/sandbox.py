@@ -50,25 +50,23 @@ def aggregateFunc(input_df, group_by, aggregate_on, aggregate_func):
 
 # implement POSTing freshly queried data to Mongo
 # cronjob to run relatively frequently
+# seed database with all-time information for each collection initially,
+# then defaults to last-7 for day-to-day unless specifically updated
 
-def mongoUpdate(timeframe = 'yesterday', reportType = 'toolReport'):
+def mongoUpdate(timeframe = 'last-7', reportType = 'toolReport'):
     # mongo_URI
     client = MongoClient(mongo_URI, server_api=ServerApi('1'))
     db = client['SCD-SHOP-DEV']
     
-    try:
-        client.admin.command('ping')
-        print("Connection successful!")
-        
-    except Exception as e:
-        exit()
-       
     # since the collections are time-agnostic, we have to ignore the time 
     # aggregations that GRIT performs and do our own aggregation for each 
     
     collection = db[f'{reportType}']
-    
-    payload = queryGritData(timeframe, reportType)
+    payload = queryGritData('last-7', reportType)[1]
+    collection.insert_many(payload.to_dict(orient = 'records'))
+    # inserting is not ideal since it will create many duplicates rapidly
+    # work on implementing upserting
+    print(f'{reportType} updated successfully.')
         
     return
     
