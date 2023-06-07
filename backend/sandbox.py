@@ -10,11 +10,6 @@ from funcs import *
 import plotly.io as pio
 pio.renderers.default='browser'
 
-geoJSON = 'data/features.geojson'
-with open(geoJSON) as file:
-    shopGEOJSON = json.load(file)
-    
-
 ''' What useful information does each kind of report contain?
 
 * full reports - completely overkill, contains all state updates, 
@@ -48,10 +43,10 @@ def aggregateFunc(input_df, group_by, aggregate_on, aggregate_func):
         
     return(output_series) 
 
-# implement POSTing freshly queried data to Mongo
-# cronjob to run relatively frequently
+# implement POSTing freshly queried data to Mongo,
+#   cronjob to run relatively frequently
 # seed database with all-time information for each collection initially,
-# then defaults to last-7 for day-to-day unless specifically updated
+#   then defaults to last-7 for day-to-day unless specifically updated
 
 def mongoUpdate(timeframe = 'last-7', reportType = 'toolReport'):
     # mongo_URI
@@ -59,16 +54,32 @@ def mongoUpdate(timeframe = 'last-7', reportType = 'toolReport'):
     db = client['SCD-SHOP-DEV']
     
     # since the collections are time-agnostic, we have to ignore the time 
-    # aggregations that GRIT performs and do our own aggregation for each 
+    #   aggregations that GRIT performs and do our own aggregation for each 
     
     collection = db[f'{reportType}']
     payload = queryGritData('last-7', reportType)[1]
-    collection.insert_many(payload.to_dict(orient = 'records'))
+
+    for i in payload.to_dict(orient = 'records'):
+        collection.update_one(
+                i,
+                i,
+                upsert = True            
+            )
+            
+    collection.update_many(
+        {payload.to_dict(orient = 'records')},
+        { "$set": {payload.to_dict(orient = 'records')}},
+        upsert = True)
+    
+    # may need to manually iterate through the records 
+    #   to identify matches / upsert accordingly
+    
     # inserting is not ideal since it will create many duplicates rapidly
     # work on implementing upserting
     print(f'{reportType} updated successfully.')
         
     return
     
+mongoUpdate()
 
 # implement retrieving data from Mongo for easier aggregation
