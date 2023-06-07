@@ -57,29 +57,22 @@ def mongoUpdate(timeframe = 'last-7', reportType = 'toolReport'):
     #   aggregations that GRIT performs and do our own aggregation for each 
     
     collection = db[f'{reportType}']
-    payload = queryGritData('last-7', reportType)[1]
+    payload = queryGritData(timeframe, reportType)[1]
 
     for i in payload.to_dict(orient = 'records'):
         collection.update_one(
                 i,
-                i,
+                {"$set": i},
                 upsert = True            
             )
-            
-    collection.update_many(
-        {payload.to_dict(orient = 'records')},
-        { "$set": {payload.to_dict(orient = 'records')}},
-        upsert = True)
     
-    # may need to manually iterate through the records 
+    # manually iterate through the records 
     #   to identify matches / upsert accordingly
     
-    # inserting is not ideal since it will create many duplicates rapidly
-    # work on implementing upserting
-    print(f'{reportType} updated successfully.')
+    print(f'{reportType} updated successfully for timeframe {timeframe}.')
         
     return
     
-mongoUpdate()
+mongoUpdate('all-time', 'toolReport')
 
 # implement retrieving data from Mongo for easier aggregation
